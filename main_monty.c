@@ -14,6 +14,7 @@ int main(char *argv[], int argc)
 		write(2,"USAGE: monty file\n", 18);
 		exit(EXIT_FAILURE);
 	}
-	file = argv[1];
+	myfile = argv[1];
+	readfile(myfile);
 	return(0);
 }
