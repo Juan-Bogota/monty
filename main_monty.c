@@ -7,14 +7,17 @@
  * Return: 0
  */
 
-int main(char *argv[], int argc)
+int main(int argc, char *argv[])
 {
-	if(argc != 2)
+	char *myfile;
+
+	if (argc != 2)
 	{
-		write(2,"USAGE: monty file\n", 18);
+		write(2, "USAGE: monty file\n", 18);
 		exit(EXIT_FAILURE);
 	}
 	myfile = argv[1];
 	readfile(myfile);
-	return(0);
+
+	return (0);
 }

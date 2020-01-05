@@ -1,5 +1,6 @@
 #include "monty.h"
 
+int number;
 /**
  * main - Start of the program
  * @argc: numbers of arguments
@@ -9,33 +10,52 @@
 
 void readfile(char *myfile)
 {
-	FILE *montyFIle;
+	FILE *montyFile;
 	char *buffer = NULL;
 	size_t size = 0;
 	ssize_t ret;
 	char **command;
-
+	int pointer;
+	stack_t *list = NULL;
 
 	montyFile = fopen(myfile, "r");
-	if (montyFile == NULL)  // si no encuentra el archivo
+	if (montyFile == NULL)
 	{
-		write(2, "Error: Can't open file", 22);
+		write(2, "Error: Can't open file ", 22);
 		write(2, myfile, strlen(myfile));
 		write(2,"\n",1);
 		exit(EXIT_FAILURE);
 	}
 	while (1)
 	{
-		ret = getline(&buffer, &size, archivo);
-		if(ret == EOF)
+		ret = getline(&buffer, &size, montyFile);
+		if (!buffer)
+		{
+			write(2,"Error: malloc failed\n", 21);
+			exit(EXIT_FAILURE);
+		}
+		if (ret == EOF)
 			break;
-		//printf("%s",buffer);
-		command = validateBuffer(buffer);
-		opcode_validate(command, buffer);
+		pointer = _memory(buffer);
+		command = validateBuffer(buffer, pointer);
+		opcode_validate(command, buffer, &list);
+		free(command);
+	}
+	free_list(list); // falta el free validar
+	{
+		dlistint_t *tmp = head;
+
+		while (head != NULL)
+		{
+			head = head->next;
+			free(tmp);
+			tmp = head;
+		}
+		free(head);
 	}
 	free(buffer);
-	fclose(archivo);
-	return (0);
+	free(command);
+	fclose(montyFile);
 }
 
 /**
@@ -45,22 +65,19 @@ void readfile(char *myfile)
  * Return: 0
  */
 
-char **validateBuffer(char *buffer)
+char **validateBuffer(char *buffer, int pointer)
 {
 	char *delim = " \n\t";
 	char *tok;
 	size_t i;
 	char **command;
 
-	if (!buffer)
-	{
-		write(2,"Error: malloc failed\n", 21);
-		exit(EXIT_FAILURE);
-	}
+
 	command = malloc(sizeof(char *) * pointer);
 	if (command == NULL)
 	{
 		write(2,"Error: malloc failed\n", 21);
+		free(buffer);
 		exit(EXIT_FAILURE);
 	}
 	tok = strtok(buffer, delim);
@@ -83,25 +100,24 @@ char **validateBuffer(char *buffer)
  * Return: 0
  */
 
-void opcode_validate(char **command, char *buffer);
+void opcode_validate(char **command, char *buffer, stack_t **list)
 {
 	int i = 0;
-	static int j = 0;
+	static int line = 0;
 
 	while(command[i] != NULL)
 		i++;
-	j++;
-	count = _itoa(j);
-	if (i != 2)
+	line++;
+	if (!(i == 2 || i == 1))
 	{
-		write(2,"L", 1);
-		write(2, count, strlen(count));
-		write(2,": unknown instruction", 21);
-		write(2, command[0], strlen(command[0]));
+		fprintf(stderr,"L %d: unknown instruction %s",line,command[0]);
+		free(command);
+		free(buffer);
 		exit(EXIT_FAILURE);
 	}
-	function_opcode(command, buffer);
-
+	if (i == 2)
+		number = atoi(command[1]);
+	f_opcode(command, buffer, line, list);
 }
 
 
@@ -112,8 +128,51 @@ void opcode_validate(char **command, char *buffer);
  * Return: 0
  */
 
-void function_opcode(char **command, char *buffer)
+void f_opcode(char **command, char *buffer, unsigned int line, stack_t **list)
 {
+	int j = 0;
+	instruction_t opcodeFunc[] = {
+		{"push", op_push},
+		{"pall", op_pall},
+		{NULL, NULL},
+	};
+
+	while (opcodeFunc[j].opcode != NULL)
+	{
+		if (strcmp(opcodeFunc[j].opcode, command[0]) == 0)
+		{
+			opcodeFunc[j].f(list, line);
+			return;
+		}
+		j++;
+	}
+	if(opcodeFunc[j].opcode == NULL)
+	{
+		fprintf(stderr,"L %d: unknown instruction %s",line,command[0]);
+		free(command);
+		free(buffer);
+		exit(EXIT_FAILURE);
+	}
+
+}
+
+/**
+ * main - Start of the program
+ * @argc: numbers of arguments
+ * @argv: arguments vector
+ * Return: 0
+ */
 
 
+int _memory(char *buffer)
+{
+	int i, count = 2;
+	char *delim = " ";
+
+	for (i = 0; buffer[i] != '\0'; i++)
+	{
+		if (buffer[i] == delim[0])
+			count++;
+	}
+	return (count);
 }
