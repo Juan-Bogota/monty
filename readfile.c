@@ -1,6 +1,6 @@
 #include "monty.h"
 
-int number;
+char *number;
 /**
  * main - Start of the program
  * @argc: numbers of arguments
@@ -15,13 +15,13 @@ void readfile(char *myfile)
 	size_t size = 0;
 	ssize_t ret;
 	char **command;
-	int pointer;
+	int pointer, line = 0, i = 0;
 	stack_t *list = NULL;
 
 	montyFile = fopen(myfile, "r");
 	if (montyFile == NULL)
 	{
-		write(2, "Error: Can't open file ", 22);
+		write(2, "Error: Can't open file ", 23);
 		write(2, myfile, strlen(myfile));
 		write(2,"\n",1);
 		exit(EXIT_FAILURE);
@@ -34,14 +34,29 @@ void readfile(char *myfile)
 			write(2,"Error: malloc failed\n", 21);
 			exit(EXIT_FAILURE);
 		}
+		line += 1;
 		if (ret == EOF)
 			break;
+		else if(ret == 1)
+		{
+			continue;
+		}
+		else
+		{
+			i = 0;
+			while (buffer[i] == ' ' && buffer[i + 1] == ' ')
+				i++;
+			if (buffer[i + 1] == '\n')
+			{
+				continue;
+			}
+		}
 		pointer = _memory(buffer);
 		command = validateBuffer(buffer, pointer);
-		opcode_validate(command, buffer, &list);
-		free(command);
+		opcode_validate(command, buffer, &list, line);
 	}
-	free_list(list); // falta el free validar
+/**
+	free_list(list);
 	{
 		dlistint_t *tmp = head;
 
@@ -53,6 +68,7 @@ void readfile(char *myfile)
 		}
 		free(head);
 	}
+*/
 	free(buffer);
 	free(command);
 	fclose(montyFile);
@@ -100,23 +116,21 @@ char **validateBuffer(char *buffer, int pointer)
  * Return: 0
  */
 
-void opcode_validate(char **command, char *buffer, stack_t **list)
+void opcode_validate(char **command, char *buffer, stack_t **list, int line)
 {
 	int i = 0;
-	static int line = 0;
 
 	while(command[i] != NULL)
 		i++;
-	line++;
 	if (!(i == 2 || i == 1))
 	{
-		fprintf(stderr,"L %d: unknown instruction %s",line,command[0]);
+		fprintf(stderr,"L%d: unknown instruction %s\n",line,command[0]);
 		free(command);
 		free(buffer);
 		exit(EXIT_FAILURE);
 	}
 	if (i == 2)
-		number = atoi(command[1]);
+		number = command[1];
 	f_opcode(command, buffer, line, list);
 }
 
@@ -134,6 +148,11 @@ void f_opcode(char **command, char *buffer, unsigned int line, stack_t **list)
 	instruction_t opcodeFunc[] = {
 		{"push", op_push},
 		{"pall", op_pall},
+		{"pint",op_pint},
+		{"pop", op_pop},
+		{"swap",op_swap},
+		{"add",op_add},
+		{"nop",op_nop},
 		{NULL, NULL},
 	};
 
@@ -148,7 +167,7 @@ void f_opcode(char **command, char *buffer, unsigned int line, stack_t **list)
 	}
 	if(opcodeFunc[j].opcode == NULL)
 	{
-		fprintf(stderr,"L %d: unknown instruction %s",line,command[0]);
+		fprintf(stderr,"L%d: unknown instruction %s\n",line,command[0]);
 		free(command);
 		free(buffer);
 		exit(EXIT_FAILURE);
