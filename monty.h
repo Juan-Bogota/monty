@@ -41,9 +41,9 @@ typedef struct instruction_s
 } instruction_t;
 
 void readfile(char *myfile);
-char **validateBuffer(char *buffer, int pointer);
-void opcode_validate(char **command, char *buffer, stack_t **list, int line);
-void f_opcode(char **command, char *buffer, unsigned int line, stack_t **list);
+char **validateBuffer(char *buffer, int pointer, FILE *montyF);
+void op_val(char **command, char *buffer, stack_t **list, int line, FILE *a);
+void f_opcode(char **command, char *buffer, int line, stack_t **list, FILE *m);
 int _memory(char *buffer);
 void op_push(stack_t **stack, unsigned int line_number);
 void op_pall(stack_t **stack, unsigned int line_number);
@@ -52,6 +52,6 @@ void op_pop(stack_t **stack, unsigned int line_number);
 void op_swap(stack_t **stack, unsigned int line_number);
 void op_add(stack_t **stack, unsigned int line_number);
 void op_nop(stack_t **stack, unsigned int line_number);
-
+void free_stack(stack_t **stack);
 
 #endif
