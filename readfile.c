@@ -141,6 +141,7 @@ void f_opcode(char **command, char *buffer, int line, stack_t **list, FILE *m)
 		{"swap", op_swap},
 		{"add", op_add},
 		{"nop", op_nop},
+		{"sub", op_sub},
 		{NULL, NULL},
 	};
 
